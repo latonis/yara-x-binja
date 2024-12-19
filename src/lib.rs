@@ -2,14 +2,15 @@ use binaryninja::{
     binaryview::{BinaryView, BinaryViewBase, BinaryViewExt},
     command::{register, Command},
     logger::Logger,
-    tags::TagType,
+    settings,
 };
 use bstr::BStr;
 use log::{info, LevelFilter};
+use serde_json::json;
 
-struct MyCommand;
+struct YARAScanner;
 
-impl Command for MyCommand {
+impl Command for YARAScanner {
     fn action(&self, view: &BinaryView) {
         let mut buf = Vec::new();
 
@@ -22,7 +23,7 @@ impl Command for MyCommand {
         compiler
             .add_source(
                 r#"
-                rule lorem_ipsum {
+                rule SysLibraryFrameworks_present {
                     strings:
                         $ = "/System/Library/Frameworks/"
                     condition:
@@ -37,7 +38,9 @@ impl Command for MyCommand {
         let mut scanner = yara_x::Scanner::new(&rules);
 
         let results = scanner.scan(&buf).unwrap();
-        let tt = view.create_tag_type("YARA-X Matches", "👹");
+
+        let tt = view.create_tag_type("YARA-X Matches", "🟪");
+
         for mr in results.matching_rules() {
             for p in mr.patterns() {
                 for m in p.matches() {
@@ -72,10 +75,28 @@ pub extern "C" fn UIPluginInit() -> bool {
         .init();
 
     register(
-        "YARA-X Matches in Binja",
+        "YARA-X Scanning",
         "Tag YARA rule hits in bndb via the YARA-X engine.",
-        MyCommand {},
+        YARAScanner {},
     );
+
+    let settings = settings::Settings::new("default");
+    settings.register_group("yara-x-binja", "yara-x-binja");
+
+    let default_path = format!(".{}rules", std::path::MAIN_SEPARATOR);
+    info!("Looking for YARA rules in {} by default", default_path);
+
+    let properties = json!(
+        {
+            "title": "Directory for YARA rules",
+            "type": "string",
+            "default": default_path,
+            "description": "The directory where YARA rules can be found for scanning the current binary",
+            "ignore": ["SettingsProjectScope", "SettingsResourceScope"]
+        }
+    );
+
+    settings.register_setting_json("yara-x-binja.rule_directory", properties.to_string());
 
     info!("yara-x-binja initialized successfully");
 

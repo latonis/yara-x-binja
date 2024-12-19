@@ -2532,6 +2532,7 @@ dependencies = [
  "binaryninja",
  "bstr",
  "log",
+ "serde_json",
  "yara-x",
 ]
 
