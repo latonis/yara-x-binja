@@ -8,4 +8,6 @@ crate-type = ["cdylib"]
 
 [dependencies]
 binaryninja = { git = "https://github.com/Vector35/binaryninja-api.git", branch = "dev" }
+bstr = "1.11.1"
+log = "0.4.22"
 yara-x = "0.11.1"
