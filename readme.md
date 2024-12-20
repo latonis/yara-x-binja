@@ -25,7 +25,11 @@
 For configuration purposes, the user can provide one or both of these entries in the settings. The plugin will check for the existence of rules in both places.
 
 1. Insert YARA rules into the plugin settings
+    - `settings` > `yara-x-binja` > `Raw rules`
+    
 2. Provide a diectory where YARA rules reside
+    - `settings` > `yara-x-binja` > `Directory for YARA rules`
+    ![yara-x-binja-settings](docs/settings-config.png)
 
 ## Usage
 
