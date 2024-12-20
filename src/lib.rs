@@ -5,7 +5,7 @@ use binaryninja::{
     settings,
 };
 use bstr::BStr;
-use log::{info, LevelFilter};
+use log::{error, info, LevelFilter};
 use serde_json::json;
 
 struct YARAScanner;
@@ -16,22 +16,49 @@ impl Command for YARAScanner {
 
         view.read_into_vec(&mut buf, view.start(), view.len());
 
-        info!("Read in");
-
         let mut compiler = yara_x::Compiler::new();
 
-        compiler
-            .add_source(
-                r#"
-                rule SysLibraryFrameworks_present {
-                    strings:
-                        $ = "/System/Library/Frameworks/"
-                    condition:
-                        all of them
+        let mut dir_entry = settings::Settings::new("default")
+            .get_string("yara-x-binja.rule_directory", Some(view), None)
+            .to_string();
+
+        if dir_entry.contains('~') {
+            if let Some(home_dir) = dirs::home_dir() {
+                if let Some(home_dir) = home_dir.to_str() {
+                    dir_entry = dir_entry.replace("~", home_dir);
                 }
-            "#,
+            }
+        }
+
+        if !dir_entry.as_str().ends_with(std::path::MAIN_SEPARATOR) {
+            dir_entry.push(std::path::MAIN_SEPARATOR);
+        }
+
+        if let Ok(path) = std::fs::canonicalize(std::path::Path::new(&dir_entry)) {
+            if path.is_dir() {
+                if let Ok(entries) = path.read_dir() {
+                    entries.for_each(|f| {
+                        if let Ok(file_path) = f {
+                            if let Ok(file_content) = std::fs::read_to_string(file_path.path()) {
+                                if compiler.add_source(file_content.as_bytes()).is_err() {
+                                    error!("Error loading rule content from {:?}", file_path);
+                                }
+                            }
+                        }
+                    });
+                } else {
+                    info!("Failed to read rules from path {}", dir_entry.as_str());
+                }
+            } else {
+                info!("Path given ({:?}) is not a directory!", path.as_os_str());
+            }
+        } else {
+            info!("path could not be opened ({})", dir_entry);
+            info!(
+                "{:?}",
+                std::fs::canonicalize(std::path::Path::new(&dir_entry))
             )
-            .unwrap();
+        }
 
         let rules = compiler.build();
 
@@ -58,7 +85,16 @@ impl Command for YARAScanner {
                     );
                 }
             }
-            info!("Matched on {}", mr.identifier());
+
+            // matches like these occur with module usage, no pattern exists. tag start of file
+            if mr.patterns().len() == 0 {
+                view.add_tag(
+                    view.start(),
+                    &tt,
+                    format!("Matched YARA rule ({})", mr.identifier()),
+                    false,
+                );
+            }
         }
     }
 
@@ -84,7 +120,7 @@ pub extern "C" fn UIPluginInit() -> bool {
     settings.register_group("yara-x-binja", "yara-x-binja");
 
     let default_path = format!(".{}rules", std::path::MAIN_SEPARATOR);
-    info!("Looking for YARA rules in {} by default", default_path);
+    // info!("Looking for YARA rules in {} by default", default_path);
 
     let properties = json!(
         {
