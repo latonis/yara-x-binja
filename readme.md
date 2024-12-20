@@ -25,16 +25,20 @@
 For configuration purposes, the user can provide one or both of these entries in the settings. The plugin will check for the existence of rules in both places.
 
 1. Insert YARA rules into the plugin settings
-    - `settings` > `yara-x-binja` > `Raw rules`
-    
+    - `Preferences` > `yara-x-binja` > `YARA Rules`
+    ![yara-x-binja-add-rules-pref](docs/add-rules-config.png)
+    - `Plugins` > `YARA-X` > `Add YARA Rules`
+    ![yara-x-binja-add-rules-](docs/add-rules.png)
+        - Paste rule(s) into the form
+        ![yara-x-binja-form](docs/form.png)
 2. Provide a diectory where YARA rules reside
-    - `settings` > `yara-x-binja` > `Directory for YARA rules`
+    - `Preferences` > `yara-x-binja` > `Directory for YARA rules`
     ![yara-x-binja-settings](docs/settings-config.png)
 
 ## Usage
 
 1. Run the plugin
-    - `Plugins > YARA-X Scanning`
+    - `Plugins` > `YARA-X` > `Scan`
 2. Profit
 
 
