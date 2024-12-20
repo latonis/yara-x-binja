@@ -158,7 +158,6 @@ pub extern "C" fn UIPluginInit() -> bool {
     settings.register_group("yara-x-binja", "yara-x-binja");
 
     let default_path = format!(".{}rules", std::path::MAIN_SEPARATOR);
-    // info!("Looking for YARA rules in {} by default", default_path);
 
     let properties = json!(
         {
