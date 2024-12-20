@@ -1,6 +1,7 @@
 use binaryninja::{
     binaryview::{BinaryView, BinaryViewBase, BinaryViewExt},
     command::{register, Command},
+    interaction::{FormInputBuilder, FormResponses},
     logger::Logger,
     settings,
 };
@@ -10,6 +11,8 @@ use serde_json::json;
 
 struct YARAScanner;
 
+struct RuleLoader;
+
 impl Command for YARAScanner {
     fn action(&self, view: &BinaryView) {
         let mut buf = Vec::new();
@@ -17,6 +20,13 @@ impl Command for YARAScanner {
         view.read_into_vec(&mut buf, view.start(), view.len());
 
         let mut compiler = yara_x::Compiler::new();
+
+        let raw_rules =
+            settings::Settings::new("default").get_string("yara-x-binja.rules", Some(view), None);
+
+        if compiler.add_source(raw_rules.as_bytes()).is_err() {
+            error!("Error loading rule content from {:?}", raw_rules);
+        }
 
         let mut dir_entry = settings::Settings::new("default")
             .get_string("yara-x-binja.rule_directory", Some(view), None)
@@ -103,6 +113,28 @@ impl Command for YARAScanner {
     }
 }
 
+impl Command for RuleLoader {
+    fn action(&self, view: &BinaryView) {
+        let responses = FormInputBuilder::new()
+            .multiline_field("YARA Rules", None)
+            .get_form_input("Add YARA Rules");
+
+        if let FormResponses::String(r) = &responses[0] {
+            info!("{:?}", r);
+            settings::Settings::new("default").set_string(
+                "yara-x-binja.rules",
+                r,
+                Some(view),
+                None,
+            );
+        }
+    }
+
+    fn valid(&self, _view: &BinaryView) -> bool {
+        true
+    }
+}
+
 #[no_mangle]
 #[allow(non_snake_case)]
 pub extern "C" fn UIPluginInit() -> bool {
@@ -111,9 +143,15 @@ pub extern "C" fn UIPluginInit() -> bool {
         .init();
 
     register(
-        "YARA-X Scanning",
+        "YARA-X\\Scan",
         "Tag YARA rule hits in bndb via the YARA-X engine.",
         YARAScanner {},
+    );
+
+    register(
+        "YARA-X\\Add YARA Rules",
+        "Load YARA rules as a string into the YARA-X engine.",
+        RuleLoader {},
     );
 
     let settings = settings::Settings::new("default");
@@ -133,6 +171,18 @@ pub extern "C" fn UIPluginInit() -> bool {
     );
 
     settings.register_setting_json("yara-x-binja.rule_directory", properties.to_string());
+
+    let properties = json!(
+        {
+            "title": "YARA Rules",
+            "type": "string",
+            "default": "",
+            "description": "YARA Rules as strings to be used for scanning the current binary",
+            "ignore": ["SettingsProjectScope", "SettingsResourceScope"]
+        }
+    );
+
+    settings.register_setting_json("yara-x-binja.rules", properties.to_string());
 
     info!("yara-x-binja initialized successfully");
 
