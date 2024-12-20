@@ -16,7 +16,10 @@
     - `cargo build --release`
 
 3. Install the plugin
-    - `cp  ${PWD}/target/release/libyara_x_binja.dylib ~/Library/Application\ Support/Binary\ Ninja/plugins/`
+    - macOS
+        - `cp  ${PWD}/target/release/libyara_x_binja.dylib ~/Library/Application\ Support/Binary\ Ninja/plugins/`
+    - *nix
+        - `cp  ${PWD}/target/release/libyara_x_binja.so ~/binaryninja/plugins/`
 
 ## Configuration
 For configuration purposes, the user can provide one or both of these entries in the settings. The plugin will check for the existence of rules in both places.
