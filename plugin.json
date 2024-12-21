@@ -1,0 +1,29 @@
+{
+    "pluginmetadataversion": 2,
+    "name": "yara-x-binja",
+    "type": [
+        "helper",
+        "ui"
+    ],
+    "api": [
+        "rust"
+    ],
+    "description": "Scan binary content with YARA rules, powered by YARA-X.",
+    "longdescription": "",
+    "license": {
+        "name": "MIT"
+    },
+    "platforms": [
+        "Darwin",
+        "Linux",
+        "Windows"
+    ],
+    "installinstructions": {
+        "Darwin": "Please see readme.md",
+        "Linux": "Please see readme.md",
+        "Windows": "Please see readme.md"
+    },
+    "version": "0.0.1",
+    "author": "Jacob Latonis <@jacoblatonis>",
+    "minimumbinaryninjaversion": 6455
+}
