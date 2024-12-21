@@ -115,18 +115,23 @@ impl Command for YARAScanner {
 
 impl Command for RuleLoader {
     fn action(&self, view: &BinaryView) {
+        let raw_rules =
+            settings::Settings::new("default").get_string("yara-x-binja.rules", Some(view), None);
+
         let responses = FormInputBuilder::new()
-            .multiline_field("YARA Rules", None)
+            .multiline_field("YARA Rules", Some(raw_rules.as_str()))
             .get_form_input("Add YARA Rules");
 
-        if let FormResponses::String(r) = &responses[0] {
-            info!("{:?}", r);
-            settings::Settings::new("default").set_string(
-                "yara-x-binja.rules",
-                r,
-                Some(view),
-                None,
-            );
+        if responses.len() > 0 {
+            if let FormResponses::String(r) = &responses[0] {
+                info!("{:?}", r);
+                settings::Settings::new("default").set_string(
+                    "yara-x-binja.rules",
+                    r,
+                    Some(view),
+                    None,
+                );
+            }
         }
     }
 
@@ -161,7 +166,7 @@ pub extern "C" fn UIPluginInit() -> bool {
 
     let properties = json!(
         {
-            "title": "Directory for YARA rules",
+            "title": "Directory for YARA Rules",
             "type": "string",
             "default": default_path,
             "description": "The directory where YARA rules can be found for scanning the current binary",
