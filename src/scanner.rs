@@ -69,36 +69,40 @@ impl Command for Scanner {
 
         let mut scanner = yara_x::Scanner::new(&rules);
 
-        let results = scanner.scan(&buf).unwrap();
+        let results = scanner.scan(&buf);
 
-        let tt = view.create_tag_type("YARA-X Matches", "🟪");
+        if let Ok(results) = results {
+            let tt = view
+                .get_tag_type("YARA-X Matches")
+                .unwrap_or(view.create_tag_type("YARA-X Matches", "🟪"));
 
-        for mr in results.matching_rules() {
-            for p in mr.patterns() {
-                for m in p.matches() {
+            for mr in results.matching_rules() {
+                for p in mr.patterns() {
+                    for m in p.matches() {
+                        view.add_tag(
+                            view.start() + m.range().start as u64,
+                            &tt,
+                            format!("Matched YARA rule ({})", mr.identifier()),
+                            false,
+                        );
+
+                        info!(
+                            "Data Matched {:?} at offset {}",
+                            BStr::new(m.data()),
+                            m.range().start
+                        );
+                    }
+                }
+
+                // matches like these occur with module usage, no pattern exists. tag start of file
+                if mr.patterns().len() == 0 {
                     view.add_tag(
-                        view.start() + m.range().start as u64,
+                        view.start(),
                         &tt,
                         format!("Matched YARA rule ({})", mr.identifier()),
                         false,
                     );
-
-                    info!(
-                        "Data Matched {:?} at offset {}",
-                        BStr::new(m.data()),
-                        m.range().start
-                    );
                 }
-            }
-
-            // matches like these occur with module usage, no pattern exists. tag start of file
-            if mr.patterns().len() == 0 {
-                view.add_tag(
-                    view.start(),
-                    &tt,
-                    format!("Matched YARA rule ({})", mr.identifier()),
-                    false,
-                );
             }
         }
     }
