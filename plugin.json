@@ -1,6 +1,7 @@
 {
     "pluginmetadataversion": 2,
     "name": "yara-x-binja",
+    "author": "Jacob Latonis <@jacoblatonis>",
     "type": [
         "helper",
         "ui"
@@ -24,6 +25,5 @@
         "Windows": "Please see readme.md"
     },
     "version": "0.0.1",
-    "author": "Jacob Latonis <@jacoblatonis>",
     "minimumbinaryninjaversion": 6455
 }
